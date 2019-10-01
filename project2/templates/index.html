@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/layout.css" type="text/css" media="screen">
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <title>Clack</title>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="header">
+        <h1 id="mainheader">Clack</h1>
+      </div>
+      <div class="sidebar">
+        <div class="sidebarcontents">
+          <h2>Channels</h2>
+          <div class="userchannellist"></div>
+          <img src="../static/addition-icon.png" alt="Add channel" id="channelBtn">
+        </div>
+      </div>
+      <div class="chat">
+        <div class="messages"></div>
+
+        <div class="chatinput">
+          <form class="inputform" action="index.html" method="post" id="messageform">
+            <input type="submit" style="display:none">
+          </form>
+          <textarea id="messageinput" name="message" rows="4" cols="50" form="messageform" style="width: 100%; height: 100%;"></textarea>
+        </div>
+      </div>
+      <div class="settings">
+        <div class="userinfo">
+          <h2>User info
+          <h3 id="userinfodis">Username: <span id="usernameatlogin"></span></h3> </h2><img src="../static/addition-icon.png" id="editBtn">
+        </div>
+        <div class="totalusers">
+          <h2 id="usersonline">Users online</h2>
+          <div class="userlist"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="channeladd">
+      <h2>Add Channel</h2>
+      <div class="channelform">
+        Name: <input type="text" maxlength="20" id="chaninput">
+      </div>
+      <div id="wronginputchannel"></div>
+      <div class="channelforminput">
+        <button type="submit" id="submitaddchan" form="chaninput"><span id="chansubmit">Submit</span></button>
+        <button type="submit" id="canceladdchan"><span id="chansubmit"></span>Cancel</button>
+      </div>
+    </div>
+
+    <div class="changeusername">
+      <h2>Choose new username</h2>
+      <div class="changeusernameform">
+        Name: <input type="text" maxlength="20" id="newnameinput">
+      </div>
+      <div id="wronginputnewuser"></div>
+      <div class="changeusernameinput">
+        <button type="submit" id="submitnewname" form="changeusernameform"><span id="changenamesubmit">Submit</span></button>
+        <button type="submit" id="cancel"><span id="changenamecancel"></span>Cancel</button>
+      </div>
+    </div>
+
+    <div class="loginbox">
+      <h2>Choose username to begin chat!</h2>
+      <div class="loginform">
+        Name: <input type="text" maxlength="20" id="nameinput" name="username">
+      </div>
+      <div id="wronginputlogin"></div>
+      <div class="loginforminput">
+        <button type="submit" id="submitusername" form="nameinput"><span id="chansubmit">Submit</span></button>
+      </div>
+    </div>
+
+    <!-- channel addition interface !-->
+
+  </body>
+
+  <script type="text/javascript">
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+    /*---------- VARIABLE DECLARATIONS--------------*/
+      var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+      let channelButton = document.querySelector("#channelBtn");
+      let wrapper = document.querySelector(".wrapper");
+      let addchannel = document.querySelector(".channeladd");
+      let addchaninput = document.querySelector("#chaninput");
+      let canceladdchan = document.querySelector("#canceladdchan");
+      let usernamebtn = document.querySelector("#submitusername");
+      let usernameinput = document.querySelector("#nameinput");
+      let loginbox = document.querySelector(".loginbox");
+      let usersonline = document.querySelector("#usersonline");
+      let userlist = document.querySelector(".userlist");
+      let usernameatlogin = document.querySelector("#usernameatlogin");
+      let localnewusername = localStorage.getItem('localnewusername');
+      let localoldusername = localStorage.getItem('localoldusername');
+      let changenamebtn = document.querySelector("#editBtn")
+      let changeusername = document.querySelector(".changeusername");
+      let changeusernameinput = document.querySelector(".changeusernameinput");
+      let newnamebtn = document.querySelector("#submitnewname");
+      let changeusernamecancel = document.querySelector("#cancel");
+      let newnameinput = document.querySelector("#newnameinput");
+      let wronginputlogin = document.querySelector("#wronginputlogin");
+      let wronginputchannel = document.querySelector("#wronginputchannel");
+      let wronginputnewuser = document.querySelector("#wronginputnewuser");
+      let submitaddchan = document.querySelector("#submitaddchan");
+      let userchannellist = document.querySelector(".userchannellist");
+      let messageinput = document.querySelector("#messageinput");
+      let messages = document.querySelector(".messages");
+      let chatinput = document.querySelector(".inputform");
+      let focusedChannel = null;
+
+      if (performance.navigation.type == 1 || performance.navigation.type == 2 || performance.navigation.type == 0){
+        if (localnewusername) {
+          connectUser(localnewusername);
+          loadChat(localnewusername);
+          updateUsers();
+          getChannels();
+        }
+        else {
+          loadStart('');
+        }
+
+      };
+
+      /*--------------EVENT LISTENERS --------------*/
+
+      messageinput.addEventListener("keydown", event => {
+        if (event.keyCode == 13) {
+          if (focusedChannel) {
+            addMessage(focusedChannel, localStorage.getItem("localnewusername"), messageinput.value);
+            messageinput.value = "";
+            getChannelMessages(focusedChannel);
+            event.preventDefault(); /* this line is necessary to prevent creation of new line after pressing enter */
+          }
+        }
+      });
+
+      changeusername.addEventListener("keydown", event => {
+        if (event.keyCode == 27 && window.getComputedStyle(changeusername).getPropertyValue('display') != "none") {
+          unloadChangeName();
+        }
+      });
+
+      usernamebtn.addEventListener("click", () => {
+        let check = usernameinput.value.replace(/\s+/g,'');
+        let username = usernameinput.value;
+        if (username.length == 0 || check.length == 0) {
+          wronginputlogin.style.display = "block";
+          wronginputlogin.innerHTML = "Must select a username";
+        }
+        else {
+          checkUsername(username);
+        }
+      });
+
+      channelButton.addEventListener("click", () => {
+        if (window.getComputedStyle(addchannel).getPropertyValue('display') == "none") {
+          loadAddChan();
+        }
+        else {
+          unloadAddChan();
+        }
+      });
+
+      addchannel.addEventListener("keydown", event => {
+        if (event.keyCode == 27 && window.getComputedStyle(addchannel).getPropertyValue('display') != "none") {
+          unloadAddChan();
+        }
+      });
+
+      canceladdchan.addEventListener("click", () => {
+        unloadAddChan();
+      });
+
+      window.addEventListener("beforeunload", () => {
+        disconnectUser(localStorage.getItem('localnewusername'));
+        updateUsers();
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden){
+          disconnectUser(localStorage.getItem('localnewusername'));
+          updateUsers();
+
+        }
+        else {
+          connectUser(localStorage.getItem('localnewusername'));
+          updateUsers();
+          getChannels();
+        }
+      });
+
+      changenamebtn.addEventListener("click", () => {
+        if (window.getComputedStyle(changeusername).getPropertyValue('display') == "none") {
+          loadChangeName();
+        }
+        else {
+          unloadChangeName();
+        }
+      });
+
+      changeusernamecancel.addEventListener("click", () => {
+        unloadChangeName();
+      });
+
+      newnamebtn.addEventListener("click", () => {
+        let check = newnameinput.value.replace(/\s+/g,'');
+        if (newnameinput.value.length == 0 || check.length == 0){
+          wronginputnewuser.style.display = "block";
+          wronginputnewuser.innerHTML = "Must select a username";
+        }
+        else {
+          localStorage.setItem('localoldusername', localStorage.getItem('localnewusername'));
+          localStorage.setItem('localnewusername', newnameinput.value)
+          usernameatlogin.innerHTML=newnameinput.value;
+          disconnectUser(localStorage.getItem('localoldusername'));
+          connectUser(newnameinput.value);
+          loadChat(newnameinput.value);
+          updateUsers();
+          unloadChangeName();
+        }
+      });
+
+      submitaddchan.addEventListener("click", () => {
+        let check = addchaninput.value.replace(/\s+/g,'');
+        if (addchaninput.value.length == 0 || check.length == 0) {
+          wronginputchannel.style.display = "block";
+          wronginputchannel.innerHTML = "Must input a channel";
+        }
+        else {
+          addChannel(addchaninput.value);
+          updateChannels();
+        }
+      });
+
+      /*----------------- HELPER FUNCTIONS-----------------------------------------------*/
+
+      function loadStart(errorMessage) {
+        loginbox.style.display = "block";
+        wronginputlogin.style.display = "block";
+        wronginputlogin.innerHTML = errorMessage;
+
+      }
+      function loadAddChan() {
+        wrapper.style.opacity = "0.5";
+        addchannel.style.display = "block";
+        addchaninput.focus();
+      };
+
+      function unloadAddChan() {
+        wrapper.style.opacity = "initial";
+        addchannel.style.display = "none";
+        addchaninput.value = "";
+      };
+
+      function loadChat(username) {
+
+        wrapper.style.display = "grid";
+        wrapper.style.opacity = "initial";
+        loginbox.style.display = "none";
+        history.pushState(null,"chat","chat");
+      };
+
+      function loadChangeName() {
+        wrapper.style.opacity = "0.5";
+        changeusername.style.display = "block";
+        newnameinput.focus();
+      }
+
+      function unloadChangeName(){
+        wrapper.style.opacity = "initial";
+        changeusername.style.display = "none";
+        newnameinput.value = "";
+      }
+      /* checks whether username inputted by user is not used by other clients. Sends ajax request
+      to the server to confirm */
+
+      function checkUsername(username) {
+
+        const request = new XMLHttpRequest();
+        request.open('POST', '/');
+        request.onload = () => {
+          const response = request.responseText;
+          if (response == "True") {
+            loadStart("Username is already taken");
+          }
+          else if (response == "False") {
+            localStorage.setItem('localnewusername',username);
+            localStorage.setItem('localoldusername','');
+            loadChat(username);
+            connectUser(username);
+            updateUsers();
+            updateChannels();
+
+          }
+        };
+        request.send(JSON.stringify({"username":username}));
+      }
+
+      /* tells the other clients that a user has log in so you can add to the total users logged in */
+      function connectUser(username) {
+        socket.emit('log user', {'username': username});
+        usernameatlogin.innerHTML=username;
+      }
+
+      function addMessage(channel, username, message) {
+
+        socket.emit("add message", {"channel": channel, "username": username, "message": message});
+      }
+      function disconnectUser(username) {
+        socket.emit('logout user', {'username': username});
+      }
+
+      function addChannel(channel) {
+        socket.emit('add channel', {'channel': channel});
+      }
+
+      function updateUsers() {
+
+        socket.on("add user", data => {
+          userlist.innerHTML = "";
+
+          for (i = 0; i < data.length; i++) {
+            let node = document.createElement("p");
+            node.style.fontSize="15px";
+            let user = document.createTextNode(data[i]);
+            node.appendChild(user);
+            userlist.appendChild(node);
+          }
+        });
+
+        socket.on("remove user", data => {
+          userlist.innerHTML = "";
+
+          for (i = 0; i < data.length; i++) {
+            let node = document.createElement("p");
+            node.style.fontSize="15px";
+            let user = document.createTextNode(data[i]);
+            node.appendChild(user);
+            userlist.appendChild(node);
+          }
+        });
+      };
+
+      function updateChannels(){
+
+        socket.on("new channel", data => {
+          unloadAddChan();
+          userchannellist.innerHTML = "";
+          for (i=0; i < data.length; i++) {
+            let name = data[i]
+            let node = document.createElement("a");
+            node.style.display = "block";
+            node.style.textDecoration = "none";
+            node.style.fontFamily = "Montserrat";
+            node.style.fontWeight = "bold";
+            node.style.color = "white";
+            node.style.textShadow = "-1px 0 black, 0 1px black, 1px 0 black, 0 -1px black";
+            node.onmouseover = () => {
+              node.style.backgroundColor = "#A6A6DA";
+            };
+            node.onmouseout = () => {
+              node.style.backgroundColor = "#5E5EE9";
+            };
+            node.onclick = () => {
+              getChannelMessages(name);
+              focusedChannel = name;
+            };
+            let channel = document.createTextNode(data[i]);
+            node.appendChild(channel);
+            userchannellist.appendChild(node);
+          }
+        });
+        socket.on("invalid channel", data => {
+          wronginputchannel.style.display = "block";
+          wronginputchannel.innerHTML = "Channel is already taken";
+        });
+      };
+
+      function getChannels(){
+        const request = new XMLHttpRequest();
+        request.open('GET', '/channels');
+        request.onload = () => {
+          const response = JSON.parse(request.responseText);
+          let channels = response["channels"];
+          userchannellist.innerHTML = "";
+
+          for (i=0; i < channels.length; i++) {
+            let name = channels[i];
+
+            let node = document.createElement("a");
+            node.style.display = "block";
+            node.style.textDecoration = "none";
+            node.style.fontFamily = "Montserrat";
+            node.style.fontWeight = "bold";
+            node.style.color = "white";
+            node.style.textShadow = "-1px 0 black, 0 1px black, 1px 0 black, 0 -1px black";
+            node.onmouseover = () => {
+              node.style.backgroundColor = "#A6A6DA";
+            }
+            node.onmouseout = () => {
+              node.style.backgroundColor = "#5E5EE9";
+            };
+            node.onclick = () => {
+
+              getChannelMessages(name);
+              focusedChannel = name;
+            };
+            let channel = document.createTextNode(name);
+            node.appendChild(channel);
+            userchannellist.appendChild(node);
+          };
+        };
+        request.send();
+      };
+
+      function getChannelMessages(channel) {
+        const request = new XMLHttpRequest();
+        request.open('POST', '/messagesresult');
+        request.onload = () => {
+
+          const response = JSON.parse(request.responseText);
+
+          let resultmessages = response["messages"];
+          messages.innerHTML = "";
+          for (i=0; i < resultmessages.length; i++) {
+
+            let author = document.createElement("p");
+            author.innerHTML = resultmessages[i][0] + " " + resultmessages[i][1] + ":";
+
+            let message = document.createElement("div");
+            let content = document.createTextNode(resultmessages[i][2]);
+            message.appendChild(author);
+            message.appendChild(content);
+
+            messages.appendChild(message);
+            author.classList.add = "authordetailsdecor";
+            author.classList.toggle("authordetailsdecor");
+            message.classList.add = "messagedecor";
+            message.classList.toggle("messagedecor");
+            messages.scrollTop = messages.scrollHeight;
+
+          };
+        };
+        request.send(JSON.stringify({"channel": channel}));
+      };
+
+      socket.on("add message", data => {
+        getChannelMessages(data);
+      })
+    });
+  </script>
+</html>

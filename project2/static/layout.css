@@ -1,0 +1,260 @@
+body {
+  position: relative;
+
+}
+.wrapper {
+  display: none;
+  opacity: 0;
+  background-color: white;
+  display: grid;
+  grid-template-columns: auto 1000px 1fr;
+  grid-template-rows: auto 1fr;
+
+  grid-template-areas:
+    "header header header"
+    "sidebar chat settings";
+
+  height: 100vh;
+  grid-gap: 10px;
+  transition: opacity 1s;
+
+}
+
+.header {
+  grid-area: header;
+  text-align: center;
+
+
+
+}
+.sidebar {
+  grid-area: sidebar;
+  position: relative;
+  width: 200px;
+  transition: all 1s;
+  overflow: auto;
+  margin-left: 20px;
+
+}
+.chat {
+  grid-area: chat;
+  overflow: auto;
+  border-color: #5E5EE9;
+  border-style: solid;
+  border-radius: 25px;
+  margin-bottom: 25px;
+  position: relative;
+  resize: none;
+
+}
+
+.settings {
+  grid-area: settings;
+  margin-right: 25px;
+  overflow: auto;
+}
+
+
+.sidebar, .header, .settings {
+  background-color: #5E5EE9;
+  margin-bottom: 20px;
+
+}
+.sidebar, .settings {
+  border-radius: 25px;
+}
+#mainheader, h2 {
+  font-family: Montserrat;
+
+  font-weight: bold;
+  color: white;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+  text-align: center;
+}
+
+.sidebarcontents {
+  overflow: hidden;
+  text-align: center;
+}
+.sidebarcontents > a {
+  display: block;
+  text-decoration: none;
+  font-family: Montserrat;
+  font-weight: bold;
+  color: white;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+
+}
+
+.sidebarcontents > a:hover {
+  /*color: #5E5EE9;*/
+  background-color: #A6A6DA;
+}
+
+#channelBtn {
+  width: 2rem;
+  height: 2rem;
+  position: absolute;
+  bottom: 0;
+  right: 5%;
+  transition: all 0.3s;
+}
+#channelBtn:hover {
+    width:2.5rem;
+    height:2.5rem;
+    cursor:pointer;
+}
+
+
+.chatinput {
+  position: absolute;
+  bottom: 0;
+  border-style: solid;
+  width: 75%;
+  right: 12.5%;
+  height: 5%;
+  overflow: hidden;
+  border-width: 1px;
+}
+
+.chatinput > form > input {
+  width: 100%;
+}
+
+.chatinput > textarea {
+  resize: none;
+  overflow: auto;
+  font-size: auto;
+  font-family: Montserrat;
+  font-weight: bold;
+  text-shadow: -1px 0 black;
+}
+
+.channeladd, .changeusername{
+  display: none;
+  background-color: #5E5EE9;
+  width: 20%;
+  position: fixed;
+  right: 40%;
+  margin: 0;
+  top: 50%;
+  border-radius: 25px;
+  overflow: auto;
+}
+
+.channelform, .loginform, .changeusernameform {
+  display: block;
+  overflow: auto;
+  text-decoration: none;
+  font-family: Montserrat;
+  font-weight: bold;
+  color: white;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+  text-align: center;
+  margin-bottom: 2%;
+}
+
+.channelforminput, .loginforminput, .loginform, .changeusernameinput {
+  text-align: center;
+}
+
+.channelforminput > button, .loginforminput > button, .changeusernameinput > button {
+  font-family: Montserrat;
+
+  font-weight: bold;
+  color: white;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+  text-align: center;
+  background-color: #5E5EE9;
+  border-color: #5E5EE9;
+  border-radius: 25px;
+}
+
+.channelforminput > button:hover, .loginforminput > button:hover, .changeusernameinput > button:hover {
+  background-color: #A6A6DA;
+}
+
+.loginbox {
+  background-color: #5E5EE9;
+  width: 30%;
+  position: fixed;
+  right: 35%;
+  margin: 0;
+  top: 50%;
+  border-radius: 25px;
+  overflow: auto;
+  text-align: center;
+  display: none;
+}
+
+
+
+.userinfo, .totalusers {
+  text-align: center;
+}
+
+h3 {
+  text-align: left;
+  font-family: Montserrat;
+  font-weight: bold;
+  color: white;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+
+.userinfo > h3 {
+  margin-left: 3%;
+}
+
+#editBtn {
+  width: 2rem;
+  height: 2rem;
+  transition: all 0.3s;
+
+}
+#editBtn:hover {
+  width:2.5rem;
+  height:2.5rem;
+  cursor:pointer;
+}
+
+#userinfodis {
+  display: inline;
+}
+
+#wronginputchannel, #wronginputnewuser, #wronginputlogin {
+  display:none;
+  color:red;
+  text-align: center;
+}
+
+.messages {
+  width: inherit;
+  border-style: solid;
+  height: 95%;
+  overflow:auto;
+
+}
+
+.messagedecor {
+  border-radius: 25px;
+  display: inline-block;
+  left: 3%;
+  position: relative;
+  background-color: #5E5EE9;
+  word-wrap: break-word;
+  margin-top: 2%;
+  clear:both;
+  float:left;
+  max-width: 50%;
+  overflow: auto;
+  padding-left: 1em;
+  padding-right: 1em;
+
+}
+
+.authordetailsdecor {
+  font-family: Montserrat;
+  font-weight: bold;
+  color: white;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
