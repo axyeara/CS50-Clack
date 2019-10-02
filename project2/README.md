@@ -2,7 +2,7 @@
 
 Web Programming with Python and JavaScript
 
-Technologies uses:
+Technologies used:
 - Javascript
 - HTML
 - CSS
