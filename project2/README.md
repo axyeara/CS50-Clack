@@ -12,3 +12,4 @@ Technologies used:
 - AJAX
 
 
+<img src="static/clack.png">
