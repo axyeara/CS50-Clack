@@ -11,4 +11,4 @@ Technologies uses:
 - History API
 - AJAX
 
-![Clack chat](~/Pictures/clack.png)
+
