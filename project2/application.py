@@ -19,10 +19,7 @@ def index():
     elif request.method == "POST":
         username = request.get_json(force=True)["username"] #this finally works
 
-        if username in usernames:
-            return "True"
-        else:
-            return "False"
+        return username in usernames
 
 @app.route("/users", methods=["GET"])
 def users():
